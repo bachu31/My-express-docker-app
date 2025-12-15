@@ -8,7 +8,7 @@ const PORT =process.env.PORT || 5000
 app.use(express.json())
 
 app.get("/",(req,res)=>{
-    res.send("Hello , Express is Running as Docker Image")
+    res.send("Hello , Express is Running as Docker Image through Beanstalk deployment")
 
 })
 
