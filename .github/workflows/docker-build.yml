@@ -13,8 +13,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show files (sanity)
-        run: ls -la
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build Docker image
-        run: docker build -t my-express-app:ci .
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag and push Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+
+          docker build -t my-express-app:$IMAGE_TAG .
+
+          docker tag my-express-app:$IMAGE_TAG \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+
+          docker tag my-express-app:$IMAGE_TAG \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
