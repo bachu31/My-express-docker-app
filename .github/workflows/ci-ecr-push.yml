@@ -27,3 +27,9 @@ jobs:
         IMAGE_URI=${{ secrets.ECR_REPOSITORY }}:latest
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
+
+    - name: Debug secrets
+      run: |
+        echo "AWS_REGION=${{ secrets.AWS_REGION }}"
+        echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}"
+
