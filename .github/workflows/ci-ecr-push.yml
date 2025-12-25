@@ -21,6 +21,11 @@ jobs:
 
     - name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Debug secrets
+      run: |
+        echo "AWS_REGION=${{ secrets.AWS_REGION }}"
+        echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}"
 
     - name: Build and push Docker image
       run: |
@@ -28,8 +33,4 @@ jobs:
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
 
-    - name: Debug secrets
-      run: |
-        echo "AWS_REGION=${{ secrets.AWS_REGION }}"
-        echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}"
 
