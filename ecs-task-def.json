@@ -6,10 +6,7 @@
             "environment": [],
             "essential": true,
             "healthCheck": {
-                "command": [
-                    "curl -f",
-                    "http://localhost:3000/health || exit 1"
-                ],
+                "command": ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"],
                 "interval": 30,
                 "retries": 3,
                 "startPeriod": 20,
@@ -29,10 +26,7 @@
             "name": "node-app",
             "portMappings": [
                 {
-                    "appProtocol": "http",
                     "containerPort": 3000,
-                    "hostPort": 3000,
-                    "name": "3000",
                     "protocol": "tcp"
                 }
             ],
@@ -49,10 +43,5 @@
         "FARGATE"
     ],
     "cpu": "1024",
-    "memory": "3072",
-    "runtimePlatform": {
-        "cpuArchitecture": "X86_64",
-        "operatingSystemFamily": "LINUX"
-    },
-    "enableFaultInjection": false
+    "memory": "3072"
 }
