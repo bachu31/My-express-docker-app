@@ -12,7 +12,7 @@ app.use(express.json())
 
 
 app.get("/", (req, res) => {
-  res.send("Hello , Express is Running as Docker Image through ALB")
+  res.send("Hello , Express is Running as Docker Image through ALB with health check")
 
 })
 
