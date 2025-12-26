@@ -9,7 +9,7 @@ env:
   CLUSTER_NAME: ${{ secrets.ECS_CLUSTER }}
   SERVICE_NAME: node-service
   CONTAINER_NAME: node-app
-  ECR_REPO: my-ecr-repo
+  ECR_REPO: ${{ secrets.ECR_REGISTRY }}
 
 jobs:
   deploy:
