@@ -1,0 +1,96 @@
+name: ECS Deploy with Rollback
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  CLUSTER_NAME: ${{ secrets.ECS_CLUSTER }}
+  SERVICE_NAME: node-service
+  CONTAINER_NAME: node-app
+  ECR_REPO: my-ecr-repo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to ECR
+      run: |
+        aws ecr get-login-password --region $AWS_REGION \
+        | docker login --username AWS --password-stdin \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
+
+    - name: Tag previous image
+      run: |
+        docker pull $ECR_REPO:latest || true
+        docker tag $ECR_REPO:latest $ECR_REPO:previous || true
+        docker push $ECR_REPO:previous || true
+
+    - name: Build and push new image
+      run: |
+        docker build -t $ECR_REPO:latest .
+        docker push $ECR_REPO:latest
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster $CLUSTER_NAME \
+          --service $SERVICE_NAME \
+          --force-new-deployment
+
+    - name: Wait for ECS to stabilize
+      run: |
+        aws ecs wait services-stable \
+          --cluster $CLUSTER_NAME \
+          --services $SERVICE_NAME
+
+    - name: Health check
+      run: |
+        TASK_ARN=$(aws ecs list-tasks \
+          --cluster $CLUSTER_NAME \
+          --service-name $SERVICE_NAME \
+          --query 'taskArns[0]' \
+          --output text)
+
+        PUBLIC_IP=$(aws ecs describe-tasks \
+          --cluster $CLUSTER_NAME \
+          --tasks $TASK_ARN \
+          --query 'tasks[0].attachments[0].details[?name==`publicIPv4Address`].value' \
+          --output text)
+
+        for i in {1..5}; do
+          echo "Health check attempt $i"
+          if curl -f http://$PUBLIC_IP:3000/health; then
+            echo "Service is healthy"
+            exit 0
+          fi
+          sleep 10
+        done
+
+        echo "Health check failed"
+        exit 1
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        echo "Rolling back to previous image"
+        docker pull $ECR_REPO:previous
+        docker tag $ECR_REPO:previous $ECR_REPO:latest
+        docker push $ECR_REPO:latest
+
+        aws ecs update-service \
+          --cluster $CLUSTER_NAME \
+          --service $SERVICE_NAME \
+          --force-new-deployment
