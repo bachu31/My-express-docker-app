@@ -27,7 +27,7 @@ jobs:
       with:
         task-definition: ecs-task-def.json
         container-name: node-app
-        image: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+        image: ${{ secrets.ECR_REPOSITORY_CD }}:${{ github.sha }}
 
     - name: Deploy ECS service
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
