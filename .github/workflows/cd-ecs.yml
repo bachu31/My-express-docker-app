@@ -22,11 +22,12 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Render ECS task definition
+      id: render-task-definition
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: ecs-task-def.json
         container-name: node-app
-        image: ${{ secrets.ECR_REPOSITORY_CD }}:${{ github.sha }}
+        image: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
     - name: Deploy ECS service
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
