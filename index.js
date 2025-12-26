@@ -2,10 +2,14 @@ const express = require("express");
 const { cachedFetch } = require("./services/cacheService");
 const app = express();
 require("dotenv").config();
+
 const PORT = process.env.PORT || 5000
+const APP_VERSION = process.env.APP_VERSION || 'unknown';
+
 
 
 app.use(express.json())
+
 
 app.get("/", (req, res) => {
   res.send("Hello , Express is Running as Docker Image Final Beanstalk deployment")
