@@ -13,8 +13,8 @@ app.get("/", (req, res) => {
 })
 
 app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: 'Success',
+  res.status(500).json({
+    status: 'Failure',
     timestamp: new Date().toISOString()
   })
 })

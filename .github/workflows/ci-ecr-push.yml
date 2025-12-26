@@ -22,18 +22,26 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Debug secrets
+      - name: Preserve last known good image (latest → previous)
         run: |
-          echo "AWS_REGION=${{ secrets.AWS_REGION }}"
-          echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}"
+          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest || true
+          docker tag \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:previous || true
+          docker push \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:previous || true
 
       - name: Build, tag and push Docker image
         run: |
           IMAGE_TAG=${{ github.sha }}
+
           docker build -t my-express-app:$IMAGE_TAG .
+
           docker tag my-express-app:$IMAGE_TAG \
-          ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+
           docker tag my-express-app:$IMAGE_TAG \
-          ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
           docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
